@@ -1,0 +1,8 @@
+{
+  "short_name": "Identification App",
+  "name": "Species Identification App",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "rgb(245, 124, 0)",
+  "background_color": "#ffffff"
+}
