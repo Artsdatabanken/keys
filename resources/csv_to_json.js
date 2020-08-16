@@ -3,7 +3,66 @@
 const fs = require("fs");
 const axios = require("axios");
 
-const getMissingNames = async (taxa) => {
+const simplify = (statements, taxa) => {
+  for (const taxon of taxa) {
+    // continue if it has no children
+    if (!taxon.children) {
+      continue;
+    }
+
+    statements = simplify(statements, taxon.children);
+
+    // for all statements for the first child
+    let myStatements = statements.filter(
+      (s) => s.taxonId === taxon.children[0].id
+    );
+
+    let siblingIds = taxon.children.map((x) => x.id).slice(1);
+
+    for (const myStatement of myStatements) {
+      let foundDifference = false;
+      // find the same statement for each next child
+      // continue when not found
+      for (const siblingId of siblingIds) {
+        if (
+          !statements.find(
+            (x) =>
+              x.taxonId === siblingId &&
+              x.value === myStatement.value &&
+              x.frequency === myStatement.frequency
+          )
+        ) {
+          foundDifference = true;
+          break;
+        }
+      }
+
+      if (!foundDifference) {
+        // otherwise they are all the same
+        // set simplified to true
+
+        myStatement.taxonId = taxon.id;
+
+        myStatement.id =
+          taxon.id.replace("taxon:", "statement:") +
+          myStatement.value.replace("alternative:", "_");
+        // statements.push(myStatement);
+
+        statements = statements.filter(
+          (x) =>
+            !(
+              x.value === myStatement.value &&
+              taxon.children.map((y) => y.id).includes(x.taxonId)
+            )
+        );
+      }
+    }
+  }
+
+  return statements;
+};
+
+const supplementTaxa = async (taxa) => {
   for (let index = 0; index < taxa.length; index++) {
     let taxon = taxa[index];
     if (
@@ -18,14 +77,25 @@ const getMissingNames = async (taxa) => {
 
       if (taxonResult.data.length) {
         taxa[index].scientificName =
+          taxa[index].scientificName ||
           taxonResult.data[0].AcceptedNameUsage.ScientificName;
         taxa[index].vernacularName =
-          taxonResult.data[0]["VernacularName_nb-NO"][0] || undefined;
+          taxa[index].vernacularName ||
+          taxonResult.data[0]["VernacularName_nb-NO"][0] ||
+          undefined;
+        if (taxonResult.data[0].Description) {
+          taxa[index].descriptionUrl =
+            taxa[index].descriptionUrl ||
+            taxonResult.data[0].Description[0].Id.replace(
+              "Nodes/",
+              "https://artsdatabanken.no/Widgets/"
+            );
+        }
       }
     }
 
     if (taxa[index].children) {
-      taxa[index].children = await getMissingNames(taxa[index].children);
+      taxa[index].children = await supplementTaxa(taxa[index].children);
     }
 
     if (!taxa[index].id) {
@@ -149,7 +219,7 @@ key.externalServices = [
     id: "service:nbic_scientificnameid",
     title: "ScientificNameId in Artsnavnebasen",
     provider: "Norwegian Biodiversity I…Centre (Artsdatabanken)",
-    url: "https://artsdatabanken.n…pi/Taxon/ScientificName/",
+    url: "https://artsdatabanken.no/Api/Taxon/ScientificName/",
   },
 ];
 
@@ -202,6 +272,8 @@ fs.readFile("key.csv", "utf-8", (err, data) => {
     "organization"
   );
 
+  key["id"] =
+    csv[definitions.metadataRows.indexOf("Key id")][1] || undefined;
   key["title"] =
     csv[definitions.metadataRows.indexOf("Key name")][1] || undefined;
   key["description"] =
@@ -221,7 +293,8 @@ fs.readFile("key.csv", "utf-8", (err, data) => {
   }
 
   key.characters = [];
-  key.statementIds = [];
+  key.characterIds = [];
+  key.stateIds = [];
 
   csv
     .slice(
@@ -240,8 +313,10 @@ fs.readFile("key.csv", "utf-8", (err, data) => {
                 .replace("{", "alternative:")
                 .replace("}", "")
             : undefined,
-          descriptionUrl:
-            row[definitions.characterCols.indexOf("Description")] || undefined,
+          descriptionUrl: row[definitions.characterCols.indexOf("Description")]
+            ? "https://artsdatabanken.no/Widgets/" +
+              row[definitions.characterCols.indexOf("Description")]
+            : undefined,
           alternatives: [],
         });
       }
@@ -279,7 +354,8 @@ fs.readFile("key.csv", "utf-8", (err, data) => {
         );
 
         key.characters[key.characters.length - 1].alternatives.push(state);
-        key.statementIds.push(state.id);
+        key.characterIds.push(key.characters[key.characters.length - 1].id);
+        key.stateIds.push(state.id);
       }
     });
 
@@ -433,16 +509,47 @@ fs.readFile("key.csv", "utf-8", (err, data) => {
     key.taxa = mergeTaxon(taxon, key.taxa);
   }
 
-  key.taxa = getMissingNames(key.taxa).then((taxa) => {
+  const facts = csv
+    .slice(definitions.taxonRows.length + 1)
+    .map((x) => x.slice(definitions.characterCols.length + 1))
+    .filter((x) => x.length);
+
+  key.statements = [];
+
+  facts.forEach((row, stateIndex) => {
+    row.forEach((fact, taxonIndex) => {
+      if (+fact) {
+        key.statements.push({
+          id:
+            "statement:" +
+            key.taxonIds[taxonIndex].replace("taxon:", "") +
+            "_" +
+            key.stateIds[stateIndex].replace("alternative:", ""),
+          taxonId: key.taxonIds[taxonIndex],
+          characterId: key.characterIds[stateIndex],
+          value: key.stateIds[stateIndex],
+          frequency: +fact !== 1 ? fact : undefined,
+        });
+      }
+    });
+  });
+
+  key.taxa = supplementTaxa(key.taxa).then((taxa) => {
+    console.log(key.statements.length);
+    key.statements = simplify(key.statements, taxa);
+    console.log(key.statements.length);
+
     fs.writeFile(
       "output.json",
       JSON.stringify({
         $schema: key.$schema,
+        id: key.id,
         title: key.title,
         description: key.description,
         descriptionDetails: key.descriptionDetails,
         descriptionUrl: key.descriptionUrl,
         language: key.language,
+        license: key.license,
         regionName: key.regionName,
         creators: key.creators,
         contributors: key.contributors,

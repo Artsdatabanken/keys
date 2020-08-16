@@ -70,7 +70,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    fetch("https://artsdatabanken.no/Files/35142")
+    fetch("http://folk.ntnu.no/wouterk/key/json/odonata.json")
       .then((response) => response.json())
       .then((data) => {
         let myData = data;

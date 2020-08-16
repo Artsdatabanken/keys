@@ -10,15 +10,14 @@ import { Avatar } from "@material-ui/core";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 
 function AlternativeContent(props) {
-  const { title } = props.content;
-  const { media } = props.content;
+  const { title, media } = props.alternative;
 
   let avatar = "";
   if (media) {
     avatar = (
       <Avatar
         variant="square"
-        src={props.content.media_small.url}
+        src={media.mediaElement.find((m) => m.height >= 85).url}
         style={{ flex: "0 0 85px", height: "85px", marginRight: "15px" }}
       />
     );
@@ -26,17 +25,23 @@ function AlternativeContent(props) {
 
   return (
     <div
-      style={{ display: "flex", flex: "1 1 auto", cursor: (props.content.media ||
-        props.content.description ||
-        props.content.descriptionUrl ||
-        props.content.descriptionDetails) ? "pointer" : "default"
-       }}
+      style={{
+        display: "flex",
+        flex: "1 1 auto",
+        cursor:
+          props.alternative.media ||
+          props.alternative.description ||
+          props.alternative.descriptionUrl ||
+          props.alternative.descriptionDetails
+            ? "pointer"
+            : "default",
+      }}
       onClick={
-        (props.content.media ||
-          props.content.description ||
-          props.content.descriptionUrl ||
-          props.content.descriptionDetails) &&
-        props.openModal.bind(this, props.content)
+        (props.alternative.media ||
+          props.alternative.description ||
+          props.alternative.descriptionUrl ||
+          props.alternative.descriptionDetails) &&
+        props.openModal.bind(this, props.alternative)
       }
     >
       {avatar}
@@ -55,23 +60,22 @@ function AlternativeContent(props) {
 }
 
 function Alternative(props) {
-  const { id, answerIs, isAnswered, content } = props.alternative;
+  const alternative = props.alternative;
+  const { id, answerIs, isAnswered } = alternative;
 
   const getButtons = () => {
     if (answerIs === undefined) {
       return (
-        <ButtonGroup size="small">
+        <ButtonGroup size="large">
           <Button
-            style={{ color: "rgb(76, 175, 80)", backgroundColor: "white" }}
-            variant="outlined"
+            style={{ backgroundColor: "rgb(76, 175, 80)", color: "white" }}
             onClick={props.giveAnswer.bind(this, id, true)}
           >
             <CheckIcon />
           </Button>
           {props.siblings !== 1 ? (
             <Button
-              style={{ color: "rgb(245, 0, 87)", backgroundColor: "white" }}
-              variant="outlined"
+              style={{ backgroundColor: "rgb(245, 0, 87)", color: "white" }}
               onClick={props.giveAnswer.bind(this, id, false)}
             >
               <ClearIcon />
@@ -83,7 +87,7 @@ function Alternative(props) {
       );
     } else if (isAnswered) {
       return (
-        <ButtonGroup size="small">
+        <ButtonGroup size="large">
           <Button
             style={
               answerIs
@@ -113,14 +117,12 @@ function Alternative(props) {
   return (
     <Box style={getBoxStyle()}>
       <div style={{ flex: "1 1 auto" }}>
-        {content.map((c, index) => (
           <AlternativeContent
-            content={c}
+            alternative={alternative}
             media={props.media}
             openModal={props.openModal}
-            key={index}
+            key={alternative.id}
           />
-        ))}
       </div>
       <div style={{ flex: "0 1 auto", margin: "15px" }}>{getButtons()}</div>
     </Box>

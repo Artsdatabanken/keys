@@ -16,7 +16,7 @@ function Taxon(props) {
     props.taxon.vernacularName.slice(1);
 
   const { vernacularName, scientificName, id, isResult } = props.taxon;
-  let { media_small } = props.taxon;
+  let media = props.taxon.media; 
 
   let children = [];
   if (props.taxon.children) {
@@ -28,10 +28,10 @@ function Taxon(props) {
   }
 
   // If this taxon has no media, but is a result with children, set the media element to that of the first child
-  if (!media_small && isResult && children.length) {
+  if (!media && isResult && children.length) {
     let child = children.find((child) => child.media);
     if (child) {
-      media_small = child.media_small;
+      media = child.media;
     }
   }
 
@@ -81,14 +81,16 @@ function Taxon(props) {
   return (
     <TreeItem
       nodeId={props.taxon.id + "_" + props.filter}
-      onLabelClick={(e) => {e.preventDefault()}}
+      onLabelClick={(e) => {
+        e.preventDefault();
+      }}
       label={
         <Card variant="outlined" style={cardStyle}>
           <div style={{ display: "flex" }}>
-            {media_small && (
+            {media && (
               <Avatar
                 variant="square"
-                src={media_small.url}
+                src={media.mediaElement.find((m) => m.height >= 55).url}
                 style={{ width: "55px", height: "55px" }}
                 onClick={props.openModal.bind(this, props.taxon, "taxon")}
               />

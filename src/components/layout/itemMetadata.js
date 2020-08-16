@@ -48,49 +48,87 @@ const ItemMetadata = (props) => {
 
   return (
     <div>
-      {item.creator && (
-        <span
-          onClick={
-            item.creator.url &&
-            modalOpener.bind(this, item.creator.url, "url")
-          }
-          style={ item.creator.url && {cursor: "pointer"}}
-        >
-          {item.creator.name}
-        </span>
-      )}
-      {item.contributor && (
-        <span
-          onClick={
-            item.contributor.url &&
-            modalOpener.bind(this, item.contributor.url, "url")
-          }
-          style={ item.contributor.url && {cursor: "pointer"}}
-
-        >
-          , {item.contributor.name}
-        </span>
-      )}
-      {item.publisher && (
-        <div
-          onClick={
-            item.publisher.url &&
-            modalOpener.bind(this, item.publisher.url, "url")
-          }
-          style={item.publisher.url && { cursor: "pointer"}}
-        >
-          {item.publisher.media ? (
-            <img
-              alt={item.publisher.name}
-              src={item.publisher.media.mediaElement.url}
-              style={{ maxHeight: "25px", maxWidth: "200px" }}
-            />
-          ) : (
-            <span>{item.publisher.name}</span>
-          )}
+      {item.creators && (
+        <div>
+          Opphav:
+          {item.creators.map((creator) => (
+            <span
+              onClick={
+                creator.url && modalOpener.bind(this, creator.url, "url")
+              }
+              style={{
+                paddingLeft: "15px",
+                cursor: creator.url ? "pointer" : "default",
+              }}
+              key={creator.id}
+            >
+              {creator.name}
+            </span>
+          ))}
         </div>
       )}
-      {item.license && getLicense(item.license, 60)}
+
+      {item.contributors && (
+        <div>
+          Bidrag:
+          {item.contributors.map((contributor) => (
+            <span
+              onClick={
+                contributor.url &&
+                modalOpener.bind(this, contributor.url, "url")
+              }
+              style={{
+                paddingLeft: "10px",
+                cursor: contributor.url ? "pointer" : "default",
+              }}
+              key={contributor.id}
+            >
+              {contributor.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {item.publishers && (
+        <div>
+          Utgiver:
+          {item.publishers.map((publisher) => (
+            <span
+              onClick={
+                publisher.url && modalOpener.bind(this, publisher.url, "url")
+              }
+              style={{
+                paddingLeft: "10px",
+                cursor: publisher.url ? "pointer" : "default",
+              }}
+              key={publisher.id}
+            >
+              {publisher.media ? (
+                <img
+                  alt={publisher.name}
+                  src={publisher.media.mediaElement.url}
+                  style={{ maxHeight: "25px", maxWidth: "200px" }}
+                />
+              ) : (
+                <span>{publisher.name}</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {item.infoUrl && (
+        <div
+          onClick={modalOpener.bind(this, item.infoUrl, "url")}
+          style={{
+            cursor: "pointer",
+            color: "blue",
+            textDecoration: "underline"
+          }}
+        >Mer om bildet</div>
+      )}
+
+      <div>{item.license && getLicense(item.license, 60)}</div>
     </div>
   );
 };

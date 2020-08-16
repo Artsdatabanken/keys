@@ -374,8 +374,7 @@ export const giveAnswers = (stateObject, answers, modalOpener) => {
 
 // gives a taxon and all of it's children an empty list of conflicts, standard relevance, and a small and a large media url
 export const initElement = (element, mediaElements, persons, organizations) => {
-  let small_size = 55;
-  let large_size = 1280;
+  let elementType = element.id ? element.id.split(":")[0] : "";
 
   const getObject = (id, objects) => {
     if (typeof id === "string") {
@@ -407,7 +406,7 @@ export const initElement = (element, mediaElements, persons, organizations) => {
     });
   }
   // if the element is a taxon
-  else if (element.scientificName || element.vernacularName) {
+  else if (elementType === "taxon") {
     element.conflicts = [];
     element.isRelevant = true;
     element.isIrrelevant = false;
@@ -420,41 +419,37 @@ export const initElement = (element, mediaElements, persons, organizations) => {
   }
 
   // if the element is a character
-  else if (element.alternatives) {
-    small_size = 85;
+  else if (elementType === "character") {
     element.alternatives = element.alternatives.map((alternative) =>
       initElement(alternative, mediaElements, persons, organizations)
     );
   }
 
-  // if the element is an alternative
-  else if (element.content) {
-    small_size = 85;
-    element.content = element.content.map((alternative) =>
-      initElement(alternative, mediaElements, persons, organizations)
-    );
-  }
-
-  element.creator = getObject(element.creator, persons);
-  element.contributor = getObject(element.contributor, persons);
-  element.publisher = getObject(element.publisher, organizations);
+  element.creators = getObject(element.creators, persons);
+  element.contributors = getObject(element.contributors, persons);
+  element.publishers = getObject(element.publishers, organizations);
   element.media = getObject(element.media, mediaElements);
   element.init = true;
 
   if (element.media) {
-    // element.media = initElement(element.media, mediaElements, persons, organizations);
+    element.media = initElement(
+      element.media,
+      mediaElements,
+      persons,
+      organizations
+    );
 
     // get a separate small and large media elements
-    if (element.media && Array.isArray(element.media.mediaElement)) {
-      element.media_small =
-        element.media.mediaElement.find((m) => m.height >= small_size) ||
-        element.media.mediaElement[element.media.mediaElement.length - 1];
-      element.media_large =
-        element.media.mediaElement.find((m) => m.height >= large_size) ||
-        element.media.mediaElement[element.media.mediaElement.length - 1];
-    } else if (element.media) {
-      element.media_small = element.media_large = element.media.mediaElement;
-    }
+    // if (element.media && Array.isArray(element.media.mediaElement)) {
+    //   element.media_small =
+    //     element.media.mediaElement.find((m) => m.height >= small_size) ||
+    //     element.media.mediaElement[element.media.mediaElement.length - 1];
+    //   element.media_large =
+    //     element.media.mediaElement.find((m) => m.height >= large_size) ||
+    //     element.media.mediaElement[element.media.mediaElement.length - 1];
+    // } else if (element.media) {
+    //   element.media_small = element.media_large = element.media.mediaElement;
+    // }
   }
 
   return element;
@@ -580,6 +575,8 @@ export const filterTaxaByNames = (stateObject, taxaToKeep, keepCommonTaxon) => {
 };
 
 export const setModal = (stateObject, content, contentType, modalOpener) => {
+  console.log(content);
+
   let boxStyle = {
     overflow: "auto",
     border: "1px solid #888",
@@ -603,8 +600,6 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
         scientificName,
         media,
         children,
-        media_large,
-        media_small,
         description,
         descriptionDetails,
         descriptionUrl,
@@ -615,8 +610,6 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
         scientificName,
         media,
         children,
-        media_large,
-        media_small,
         description,
         descriptionDetails,
         descriptionUrl,
@@ -656,7 +649,6 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
                     component="h2"
                   >
                     {c.vernacularName}
-                 
                   </Typography>
                   <Typography
                     variant="body2"
@@ -667,7 +659,7 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
                     {form && (
                       <Chip
                         style={{
-                          marginLeft: 5
+                          marginLeft: 5,
                         }}
                         size="small"
                         variant="default"
@@ -765,9 +757,10 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
       content.isResult &&
       content.children.length
     ) {
-      let child = content.children.find(c => c.media) || {media: undefined, media_large: undefined};
+      let child = content.children.find((c) => c.media) || {
+        media: undefined,
+      };
       content.media = child.media;
-      content.media_large = child.media_large;
     }
 
     let form;
@@ -782,10 +775,10 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
     stateObject.modalContent = (
       <div style={boxStyle}>
         <div style={{ margin: "25px" }}>
-          {content.media_large && (
+          {content.media && (
             <div>
               <img
-                src={content.media_large.url}
+                src={(content.media.mediaElement.find((m) => m.height >= 1280) || content.media.mediaElement[content.media.mediaElement.length-1]).url}
                 style={{
                   maxHeight: "50vh",
                   maxWidth: "90vw",
@@ -817,7 +810,7 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
             <i>{content.scientificName}</i>
             {form && (
               <Chip
-                style={{ marginLeft: 5}}
+                style={{ marginLeft: 5 }}
                 size="small"
                 variant="default"
                 label={form.vernacularName}
@@ -851,10 +844,10 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
             </div>
           )}
 
-          {content.media_large &&
-            (content.media_large.creator ||
-              content.media_large.publisher ||
-              content.media_large.license) && (
+          {content.media &&
+            (content.media.creators ||
+              content.media.publishers ||
+              content.media.license) && (
               <div>
                 <hr style={{ marginTop: "3em" }} />
                 <Typography
@@ -865,10 +858,7 @@ export const setModal = (stateObject, content, contentType, modalOpener) => {
                   Bilde:
                 </Typography>
 
-                <ItemMetadata
-                  item={content.media_large}
-                  modalOpener={modalOpener}
-                />
+                <ItemMetadata item={content.media} modalOpener={modalOpener} />
               </div>
             )}
         </div>
