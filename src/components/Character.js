@@ -51,7 +51,7 @@ function Character(props) {
             props.character.description ||
             props.character.descriptionUrl ||
             props.character.descriptionDetails) &&
-          props.openModal.bind(this, props.character)
+          props.setModal.bind(this, {character: props.character})
         }
       ></CardHeader>
       <CardContent>
@@ -60,8 +60,8 @@ function Character(props) {
             <Divider />
             <Alternative
               alternative={alternative}
-              siblings={props.character.alternatives.length - 1}
-              openModal={props.openModal}
+              siblings={props.character.alternatives.filter(a => a.answerIs === undefined).length - 1}
+              setModal={props.setModal}
               giveAnswer={props.giveAnswer}
               undoAnswer={props.undoAnswer}
               media={props.media}

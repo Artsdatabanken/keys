@@ -10,6 +10,11 @@ import Chip from "@material-ui/core/Chip";
 
 import { Avatar } from "@material-ui/core";
 
+import {
+  getRelevantTaxaCount
+} from "../utils/logic";
+
+
 function Taxon(props) {
   props.taxon.vernacularName =
     props.taxon.vernacularName.charAt(0).toUpperCase() +
@@ -63,7 +68,8 @@ function Taxon(props) {
       style={{ fontSize: "1.12em", lineHeight: ".5em" }}
       gutterBottom
     >
-      {vernacularName}
+      {vernacularName} {' '}
+      {props.taxon.children && !props.taxon.isResult && "("  + getRelevantTaxaCount(props.taxon) + ")"}
     </Typography>
   );
 
@@ -92,7 +98,7 @@ function Taxon(props) {
                 variant="square"
                 src={media.mediaElement.find((m) => m.height >= 55).url}
                 style={{ width: "55px", height: "55px" }}
-                onClick={props.openModal.bind(this, props.taxon, "taxon")}
+                onClick={props.setModal.bind(this, {taxon: props.taxon})}
               />
             )}
             <CardHeader
@@ -100,13 +106,13 @@ function Taxon(props) {
               disableTypography={true}
               title={nameCapitalizedHeader}
               subheader={scientificNameHeader}
-              onClick={props.openModal.bind(this, props.taxon, "taxon")}
-            />
+              onClick={props.setModal.bind(this, {taxon: props.taxon})}
+              />
 
             <div style={{ flex: "0" }}>{getButton()}</div>
           </div>
           <div style={{ paddingLeft: "50px" }}>
-            {props.taxon.isResult && children.length === 1 && (
+            {props.taxon.isResult && children.length === 1 && children[0].vernacularName &&(
               <Chip
                 style={{ marginLeft: 15, marginBottom: 15, marginTop: -5 }}
                 size="small"
@@ -125,7 +131,7 @@ function Taxon(props) {
         ? children.map((child) => (
             <Taxon
               toggleDismissTaxon={props.toggleDismissTaxon}
-              openModal={props.openModal}
+              setModal={props.setModal}
               taxon={child}
               media={props.media}
               key={child.id}

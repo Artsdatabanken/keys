@@ -15,6 +15,9 @@
 # misc
 /resources/*.json
 /resources/*.csv
+/resources/*.zip
+/resources/.*
+/resources/build/
 
 .~lock.*
 

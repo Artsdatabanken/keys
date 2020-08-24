@@ -41,7 +41,7 @@ function AlternativeContent(props) {
           props.alternative.description ||
           props.alternative.descriptionUrl ||
           props.alternative.descriptionDetails) &&
-        props.openModal.bind(this, props.alternative)
+        props.setModal.bind(this, {alternative: props.alternative})
       }
     >
       {avatar}
@@ -66,16 +66,16 @@ function Alternative(props) {
   const getButtons = () => {
     if (answerIs === undefined) {
       return (
-        <ButtonGroup size="large">
+        <ButtonGroup size="large" orientation="vertical">
           <Button
-            style={{ backgroundColor: "rgb(76, 175, 80)", color: "white" }}
-            onClick={props.giveAnswer.bind(this, id, true)}
+              className="button--green"
+              onClick={props.giveAnswer.bind(this, id, true)}
           >
             <CheckIcon />
           </Button>
           {props.siblings !== 1 ? (
             <Button
-              style={{ backgroundColor: "rgb(245, 0, 87)", color: "white" }}
+              className="button--red"
               onClick={props.giveAnswer.bind(this, id, false)}
             >
               <ClearIcon />
@@ -87,12 +87,12 @@ function Alternative(props) {
       );
     } else if (isAnswered) {
       return (
-        <ButtonGroup size="large">
+        <ButtonGroup size="large" orientation="vertical">
           <Button
-            style={
+            className={
               answerIs
-                ? { backgroundColor: "rgb(76, 175, 80)", color: "white" }
-                : { backgroundColor: "rgb(245, 0, 87)", color: "white" }
+                ? "button--green"
+                : "button--red"
             }
             variant="contained"
             onClick={props.undoAnswer.bind(this, id)}
@@ -117,12 +117,12 @@ function Alternative(props) {
   return (
     <Box style={getBoxStyle()}>
       <div style={{ flex: "1 1 auto" }}>
-          <AlternativeContent
-            alternative={alternative}
-            media={props.media}
-            openModal={props.openModal}
-            key={alternative.id}
-          />
+        <AlternativeContent
+          alternative={alternative}
+          media={props.media}
+          setModal={props.setModal}
+          key={alternative.id}
+        />
       </div>
       <div style={{ flex: "0 1 auto", margin: "15px" }}>{getButtons()}</div>
     </Box>

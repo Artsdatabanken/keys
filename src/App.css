@@ -1,0 +1,15 @@
+.button--green {
+  background-color: olivedrab !important;
+  color: white !important;
+}
+
+.button--red {
+  background-color: firebrick !important;
+  color: white !important;
+}
+
+.button--orange {
+  background-color: rgb(245, 124, 0) !important;
+  color: white !important;
+}
+
