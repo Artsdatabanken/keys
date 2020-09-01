@@ -25,8 +25,11 @@ class App extends Component {
     const urlParams = new URLSearchParams(window.location.search);
     const keyId = urlParams.get("key");
 
+    let taxonSelection = urlParams.get("taxa") ? urlParams.get("taxa").split(',') : [];
+
+
     if (keyId && this.state.keys.find((k) => k.id === keyId)) {
-      return <Identification keyId={keyId} keys={this.state.keys} />;
+      return <Identification keyId={keyId} keys={this.state.keys} taxonSelection={taxonSelection} />;
     }
     return <KeyList keys={this.state.keys} />;
   }

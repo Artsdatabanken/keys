@@ -196,7 +196,8 @@ const answer = (stateObject, alternativeId, value) => {
     stateObject = removeInferrences(stateObject);
   }
 
-  stateObject = inferAlternatives(stateObject);
+  // moving to giveAnswers
+  // stateObject = inferAlternatives(stateObject);
 
   return stateObject;
 };
@@ -259,6 +260,45 @@ const checkLogicalPremise = (premise, characters) => {
   return undefined;
 };
 
+const setTaxaRelevancesByIds = (taxa, ids) => {
+  // if taxon has id that is right, return entire thing
+  // if it has id but not the right one:
+  // if it has no children with ids, set it to dismissed
+  // otherwise, map the children
+
+  return taxa
+    .map((taxon) => {
+      if (
+        taxon.externalReference &&
+        !ids.find(
+          (x) =>
+            x === `${taxon.externalReference.externalId}` ||
+            (taxon.HigherClassification &&
+              taxon.HigherClassification.find((h) => h.ScientificNameId === x))
+        )
+      ) {
+        if (
+          !taxon.children ||
+          !taxon.children.find((c) => c.externalReference)
+        ) {
+          // taxon.dismissed = true;
+          taxon = undefined;
+        } else {
+          taxon.children = filterTaxaByIds(taxon.children, ids);
+          taxon = !!taxon.children.length ? taxon : undefined;
+        }
+      }
+      return taxon;
+    })
+    .filter((taxon) => !!taxon);
+};
+
+// marks all taxa that don't include or are part of a list of taxa (as ids) as dismissed
+export const filterTaxaByIds = (taxa, ids) => {
+  taxa = setTaxaRelevancesByIds(taxa, ids);
+  return setTaxonRelevances(taxa);
+};
+
 const dismissAllExcept = (taxa, taxaToKeep) => {
   return taxa.map((taxon) => {
     if (taxon.isResult || !taxon.children) {
@@ -315,7 +355,7 @@ export const getRelevantTaxaCount = (taxa) => {
   if (Array.isArray(taxa)) {
     return taxa
       .map((t) => getRelevantTaxaCount(t))
-      .reduce((acc, tax) => acc + tax);
+      .reduce((acc, tax) => acc + tax, 0);
   }
 
   if (!taxa.isRelevant) {
@@ -329,11 +369,6 @@ export const getRelevantTaxaCount = (taxa) => {
   return getRelevantTaxaCount(taxa.children);
 };
 
-const setResults = (stateObject) => {
-  stateObject.results = getResultTaxa(stateObject.taxa);
-  return stateObject;
-};
-
 // answers a set of alternatives with their values
 export const giveAnswers = (stateObject, answers) => {
   answers.forEach((a) => {
@@ -343,6 +378,7 @@ export const giveAnswers = (stateObject, answers) => {
     stateObject = answer(stateObject, id, value);
   });
 
+  stateObject = inferAlternatives(stateObject);
   stateObject.relevantTaxaCount = getRelevantTaxaCount(stateObject.taxa);
 
   // Show the results if there is one taxon left, or no questions left to ask
@@ -353,8 +389,10 @@ export const giveAnswers = (stateObject, answers) => {
       0
     )
   ) {
-    stateObject = setResults(stateObject);
+    stateObject.results = getResultTaxa(stateObject.taxa);
     stateObject.modalObject = { results: stateObject.results };
+    stateObject.modalObject.keys = stateObject.keys;
+    stateObject.modalObject.key = stateObject.id;
   }
 
   return stateObject;
@@ -455,7 +493,7 @@ export const toggleTaxonDismissed = (stateObject, taxonId) => {
   stateObject.relevantTaxaCount = getRelevantTaxaCount(stateObject.taxa);
 
   if (stateObject.relevantTaxaCount === 1) {
-    stateObject = setResults(stateObject);
+    stateObject.results = getResultTaxa(stateObject.taxa);
     stateObject.modalObject = { results: stateObject.results };
   }
 

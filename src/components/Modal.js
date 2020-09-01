@@ -10,6 +10,8 @@ import Button from "@material-ui/core/Button";
 import ReactMarkdown from "react-markdown";
 import Typography from "@material-ui/core/Typography";
 import Chip from "@material-ui/core/Chip";
+import Divider from "@material-ui/core/Divider";
+
 import ItemMetadata from "../components/ItemMetadata";
 import KeyInfo from "./KeyInfo";
 
@@ -25,6 +27,8 @@ function Modal(props) {
       taxon.children = taxon.children
         ? taxon.children.filter((child) => child.isRelevant)
         : [];
+
+      modalObject.taxon = taxon;
     } else {
       modalContent = (
         <div style={{ margin: "25px" }}>
@@ -48,7 +52,7 @@ function Modal(props) {
 
             return (
               <div>
-                <hr style={{ marginTop: "3em" }} />
+                <Divider style={{ margin: "2em 0 1em 0" }} />
                 <Typography
                   variant="h2"
                   style={{ fontSize: "1.82em" }}
@@ -117,6 +121,12 @@ function Modal(props) {
         )
     );
 
+    const urlParams = new URLSearchParams(window.location.search);
+    let taxonSelection = urlParams.get("taxa")
+      ? urlParams.get("taxa").split(",")
+      : [];
+    let mainKey = modalObject.keys.find((k) => k.id === key.id);
+
     modalContent = (
       <div style={{ margin: "25px" }}>
         <Typography variant="h3" component="h1">
@@ -131,8 +141,17 @@ function Modal(props) {
         <Typography variant="body2" component="div">
           <ReactMarkdown source={key.descriptionDetails} />
         </Typography>
+
+        {!!taxonSelection.length && 
+        <Typography variant="body1" component="p">
+        <b>Du ser på en delnøkkel, som er begrenset til {taxonSelection.length === 1 ? "ett takson" : taxonSelection.length + " taksa"}.</b>
+      </Typography>
+        }
+
+
+
         {key.descriptionUrl && (
-          <div>
+          <div style={{ paddingTop: "1em" }}>
             <Button
               className="button--orange"
               onClick={setModal.bind(this, { url: key.descriptionUrl })}
@@ -141,15 +160,25 @@ function Modal(props) {
             </Button>
           </div>
         )}
-        <hr style={{ marginTop: "3em" }} />
+        <Divider style={{ margin: "2em 0 1em 0" }} />
         <ItemMetadata item={key} setModal={setModal} />
-        <div>Versjon: {key.lastModified}</div>
-        <div>Id: {key.id}</div>
-        <div>Språk: {key.language}</div>
+
+        {!!taxonSelection.length && (
+          <div>
+            <Divider style={{ margin: "2em 0 1em 0" }} />
+            <Typography variant="overline" style={{lineHeight: "1em"}}>
+              Denne nøkkelen kan bestemme mer enn utvalget du bruker det til nå.
+              Bruk hele nøkkelen hvis du er usikker om det gjeldende utvalget er
+              korrekt:
+            </Typography>
+            <KeyInfo keyItem={mainKey} />
+          </div>
+        )}
+
         {!!parentKeys.length && (
           <div>
-            <hr style={{ marginTop: "3em" }} />
-            <Typography variant="overline" component="p">
+            <Divider style={{ margin: "2em 0 1em 0" }} />
+            <Typography variant="overline" style={{lineHeight: "1em"}}>
               Ikke sikker om dette er nøkkelen du trenger? Følgende{" "}
               {parentKeys.length === 1 ? "nøkkel" : "nøkler"} kan brukes til å
               sjekke om{" "}
@@ -162,137 +191,11 @@ function Modal(props) {
             ))}
           </div>
         )}
-        <hr style={{ marginTop: "3em" }} />
-        <Typography variant="overline" component="p">
+        <Divider style={{ margin: "2em 0 1em 0" }} />
+        <Typography variant="overline" style={{lineHeight: "1em"}}>
           Artsdatabanken har også {modalObject.keys.length - 1} andre nøkler.{" "}
           <a href="./">Gå til oversikten</a>.
         </Typography>
-      </div>
-    );
-  } else if (modalObject.taxon) {
-    let { taxon, keys, key } = modalObject;
-
-    if (!taxon.media && taxon.isResult && taxon.children.length) {
-      let child = taxon.children.find((c) => c.media) || {
-        media: undefined,
-      };
-      taxon.media = child.media;
-    }
-
-    let form;
-    if (taxon.children && taxon.children.length === 1) {
-      form = taxon.children[0];
-    }
-
-    let followUpKeys = taxon.externalReference
-      ? keys.filter(
-          (k) =>
-            k.id !== key.id &&
-            (k.classification[k.classification.length - 1].ScientificNameId ===
-              taxon.externalReference.externalId ||
-              k.subTaxa.find(
-                (st) =>
-                  st.ScientificNameId === taxon.externalReference.externalId
-              ))
-        )
-      : [];
-
-    modalContent = (
-      <div style={{ margin: "25px" }}>
-        {taxon.media && (
-          <div>
-            <img
-              src={
-                (
-                  taxon.media.mediaElement.find((m) => m.height >= 1280) ||
-                  taxon.media.mediaElement[taxon.media.mediaElement.length - 1]
-                ).url
-              }
-              style={{
-                maxHeight: "50vh",
-                maxWidth: "90vw",
-                display: "block",
-                marginLeft: "auto",
-                marginRight: "auto",
-              }}
-              alt={`Bilde: ${taxon.scientificName}`}
-            />
-          </div>
-        )}
-        <Typography variant="h2" style={{ fontSize: "2.5em" }} component="h2">
-          {taxon.vernacularName}
-        </Typography>
-
-        <Typography
-          variant="body2"
-          component="h2"
-          style={{ marginBottom: "1em", fontSize: "1.3em" }}
-        >
-          <i>{taxon.scientificName}</i>
-          {form && form.vernacularName && (
-            <Chip
-              style={{ marginLeft: 5 }}
-              size="small"
-              variant="default"
-              label={form.vernacularName}
-            />
-          )}
-        </Typography>
-
-        <Typography variant="body1" component="p" style={{ fontSize: "1.4em" }}>
-          <b>{taxon.description}</b>
-        </Typography>
-
-        <Typography
-          variant="body2"
-          component="div"
-          style={{ marginBottom: "3em", fontSize: "1.2em" }}
-        >
-          <ReactMarkdown source={taxon.descriptionDetails} />
-        </Typography>
-        {taxon.descriptionUrl && (
-          <div>
-            <Button
-              className="button--orange"
-              onClick={setModal.bind(this, { url: taxon.descriptionUrl })}
-            >
-              Les mer
-            </Button>
-          </div>
-        )}
-
-        {taxon.media &&
-          (taxon.media.creators ||
-            taxon.media.publishers ||
-            taxon.media.license) && (
-            <div>
-              <hr style={{ marginTop: "3em" }} />
-              <Typography
-                variant="body2"
-                style={{ fontSize: "1.3em" }}
-                component="h2"
-              >
-                Bilde:
-              </Typography>
-
-              <ItemMetadata item={taxon.media} setModal={setModal} />
-            </div>
-          )}
-
-        {!!followUpKeys.length && (
-          <div>
-            <hr style={{ marginTop: "3em" }} />
-            <Typography variant="overline" component="p">
-              Følgende {followUpKeys.length === 1 ? "nøkkel" : "nøkler"} kan
-              brukes til å artsbestemme{" "}
-              {taxon.vernacularName || taxon.scientificName} nærmere:
-            </Typography>
-
-            {followUpKeys.map((p) => (
-              <KeyInfo key={p.id} keyItem={p} />
-            ))}
-          </div>
-        )}
       </div>
     );
   } else if (modalObject.character || modalObject.alternative) {
@@ -364,7 +267,7 @@ function Modal(props) {
               content.media.publishers ||
               content.media.license) && (
               <div>
-                <hr style={{ marginTop: "3em" }} />
+                <Divider style={{ margin: "2em 0 1em 0" }} />
                 <Typography
                   variant="body2"
                   style={{ fontSize: "1.3em" }}
@@ -379,6 +282,135 @@ function Modal(props) {
         </div>
       );
     }
+  }
+
+  if (modalObject.taxon) {
+    let { taxon, keys, key } = modalObject;
+
+    if (!taxon.media && taxon.isResult && taxon.children.length) {
+      let child = taxon.children.find((c) => c.media) || {
+        media: undefined,
+      };
+      taxon.media = child.media;
+    }
+
+    let form;
+    if (taxon.children && taxon.children.length === 1) {
+      form = taxon.children[0];
+    }
+
+    let followUpKeys = taxon.externalReference
+      ? keys.filter(
+          (k) =>
+            k.id !== key.id &&
+            (k.classification[k.classification.length - 1].ScientificNameId ===
+              taxon.externalReference.externalId ||
+              k.subTaxa.find(
+                (st) =>
+                  st.ScientificNameId === taxon.externalReference.externalId
+              ))
+        )
+      : [];
+
+    modalContent = (
+      <div style={{ margin: "25px" }}>
+        {taxon.media && (
+          <div>
+            <img
+              src={
+                (
+                  taxon.media.mediaElement.find((m) => m.height >= 1280) ||
+                  taxon.media.mediaElement[taxon.media.mediaElement.length - 1]
+                ).url
+              }
+              style={{
+                maxHeight: "50vh",
+                maxWidth: "90vw",
+                display: "block",
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+              alt={`Bilde: ${taxon.scientificName}`}
+            />
+          </div>
+        )}
+        <Typography variant="h2" style={{ fontSize: "2.5em" }} component="h2">
+          {taxon.vernacularName.charAt(0).toUpperCase() +
+            taxon.vernacularName.slice(1)}
+        </Typography>
+
+        <Typography
+          variant="body2"
+          component="h2"
+          style={{ marginBottom: "1em", fontSize: "1.3em" }}
+        >
+          <i>{taxon.scientificName}</i>
+          {form && form.vernacularName && (
+            <Chip
+              style={{ marginLeft: 5 }}
+              size="small"
+              variant="default"
+              label={form.vernacularName}
+            />
+          )}
+        </Typography>
+
+        <Typography variant="body1" component="p" style={{ fontSize: "1.4em" }}>
+          <b>{taxon.description}</b>
+        </Typography>
+
+        <Typography
+          variant="body2"
+          component="div"
+          style={{ marginBottom: "3em", fontSize: "1.2em" }}
+        >
+          <ReactMarkdown source={taxon.descriptionDetails} />
+        </Typography>
+        {taxon.descriptionUrl && (
+          <div>
+            <Button
+              className="button--orange"
+              onClick={setModal.bind(this, { url: taxon.descriptionUrl })}
+            >
+              Les mer
+            </Button>
+          </div>
+        )}
+
+        {taxon.media &&
+          (taxon.media.creators ||
+            taxon.media.publishers ||
+            taxon.media.license) && (
+            <div>
+              <Divider style={{ margin: "2em 0 1em 0" }} />
+              <Typography
+                variant="body2"
+                style={{ fontSize: "1.3em" }}
+                component="h2"
+              >
+                Bilde:
+              </Typography>
+
+              <ItemMetadata item={taxon.media} setModal={setModal} />
+            </div>
+          )}
+
+        {!!followUpKeys.length && (
+          <div>
+            <Divider style={{ margin: "2em 0 1em 0" }} />
+            <Typography variant="overline" component="p">
+              Følgende {followUpKeys.length === 1 ? "nøkkel" : "nøkler"} kan
+              brukes til å artsbestemme{" "}
+              {taxon.vernacularName || taxon.scientificName} nærmere:
+            </Typography>
+
+            {followUpKeys.map((p) => (
+              <KeyInfo key={p.id} keyItem={p} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (

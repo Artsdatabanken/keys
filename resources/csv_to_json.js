@@ -222,7 +222,7 @@ const processFile = async (err, data) => {
 
     taxon = await fetchTaxonData(taxon);
     key.HigherClassifications.push(taxon.HigherClassification);
-    delete taxon.HigherClassification;
+    //delete taxon.HigherClassification;
 
     taxon.id =
       "taxon:" + taxon.scientificName.replace(/\s+/g, "").toLowerCase();
@@ -368,7 +368,10 @@ const processFile = async (err, data) => {
     });
   });
 
-  key.taxa = await supplementTaxa(key.taxa);
+  key.taxa = await supplementTaxa(
+    key.taxa,
+    key.classification[key.classification.length - 1]
+  );
 
   console.log(`${key.statements.length} statements before simplification`);
   key.statements = simplify(key.statements, key.taxa);
@@ -520,6 +523,12 @@ const simplify = (statements, taxa) => {
 
 const fetchTaxonData = async (taxon) => {
   console.log("Fetching name...");
+
+  let language =
+    key["language"].slice(0, 2).toLowerCase() === "no"
+      ? key["language"].slice(3).toLowerCase()
+      : key["language"].slice(0, 2).toLowerCase();
+
   let taxonResult = await axios.get(
     "https://artsdatabanken.no/api/Resource/?Take=1&Type=Taxon&AcceptedNameUsage=ScientificName/" +
       taxon.externalReference.externalId
@@ -529,14 +538,16 @@ const fetchTaxonData = async (taxon) => {
     taxon.scientificName = taxonResult.data[0].AcceptedNameUsage.ScientificName;
     taxon.vernacularName =
       taxon.vernacularName ||
-      (taxonResult.data[0]["VernacularName_nb-NO"] &&
-        taxonResult.data[0]["VernacularName_nb-NO"][0]) ||
+      (taxonResult.data[0]["VernacularName_" + language + "-NO"] &&
+        taxonResult.data[0]["VernacularName_" + language + "-NO"][0]) ||
       taxon.scientificName;
-    if (taxonResult.data[0].Description && !taxon.descriptionUrl) {
-      taxon.descriptionUrl = taxonResult.data[0].Description[0].Id.replace(
-        "Nodes/",
-        "https://artsdatabanken.no/Widgets/"
-      );
+    if (
+      taxonResult.data[0]["Description_" + language] &&
+      !taxon.descriptionUrl
+    ) {
+      taxon.descriptionUrl = taxonResult.data[0][
+        "Description_" + language
+      ][0].Id.replace("Nodes/", "https://artsdatabanken.no/Widgets/");
     }
 
     taxon.HigherClassification =
@@ -557,19 +568,39 @@ const fetchTaxonData = async (taxon) => {
   return taxon;
 };
 
-const supplementTaxa = async (taxa) => {
+const supplementTaxa = async (taxa, rootTaxon, parentTaxon = false) => {
   for (let index = 0; index < taxa.length; index++) {
-    let taxon = taxa[index];
     if (
-      taxon.externalReference &&
-      (!taxon.scientificName || !taxon.vernacularName)
+      taxa[index].externalReference &&
+      (!taxa[index].scientificName || !taxa[index].vernacularName)
     ) {
       taxa[index] = await fetchTaxonData(taxa[index]);
-      delete taxa[index].HigherClassification;
+    }
+
+    if (
+      parentTaxon &&
+      parentTaxon.externalReference &&
+      taxa[index].HigherClassification
+    ) {
+      taxa[index].HigherClassification = taxa[index].HigherClassification.slice(
+        taxa[index].HigherClassification.findIndex(
+          (x) => x.ScientificNameId === parentTaxon.externalReference.externalId
+        ) + 1
+      );
+    } else if (taxa[index].HigherClassification) {
+      taxa[index].HigherClassification = taxa[index].HigherClassification.slice(
+        taxa[index].HigherClassification.findIndex(
+          (x) => x.ScientificNameId === rootTaxon.ScientificNameId
+        ) + 1
+      );
     }
 
     if (taxa[index].children) {
-      taxa[index].children = await supplementTaxa(taxa[index].children);
+      taxa[index].children = await supplementTaxa(
+        taxa[index].children,
+        rootTaxon,
+        taxa[index]
+      );
     }
 
     if (!taxa[index].id) {

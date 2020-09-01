@@ -1,5 +1,7 @@
 import React from "react";
 
+import "../App.css";
+
 const ItemMetadata = (props) => {
   const { item, setModal } = props;
 
@@ -47,88 +49,125 @@ const ItemMetadata = (props) => {
   };
 
   return (
-    <div>
+    <table className="metadataTable">
       {item.creators && (
-        <div>
-          Opphav:
-          {item.creators.map((creator) => (
-            <span
-              onClick={creator.url && setModal.bind(this, { url: creator.url })}
-              style={{
-                paddingLeft: "15px",
-                cursor: creator.url ? "pointer" : "default",
-              }}
-              key={creator.id}
-            >
-              {creator.name}
-            </span>
-          ))}
-        </div>
+        <tr>
+          <td>Opphav:</td>
+          <td>
+            {item.creators.map((creator) => (
+              <div
+                onClick={
+                  creator.url && setModal.bind(this, { url: creator.url })
+                }
+                style={{
+                  cursor: creator.url ? "pointer" : "default",
+                }}
+                key={creator.id}
+              >
+                {creator.name}
+              </div>
+            ))}
+          </td>
+        </tr>
       )}
 
       {item.contributors && (
-        <div>
-          Bidrag:
-          {item.contributors.map((contributor) => (
-            <span
-              onClick={
-                contributor.url && setModal.bind(this, { url: contributor.url })
-              }
-              style={{
-                paddingLeft: "10px",
-                cursor: contributor.url ? "pointer" : "default",
-              }}
-              key={contributor.id}
-            >
-              {contributor.name}
-            </span>
-          ))}
-        </div>
+        <tr>
+          <td>Bidrag:</td>
+          <td>
+            {item.contributors.map((contributor) => (
+              <div
+                onClick={
+                  contributor.url &&
+                  setModal.bind(this, { url: contributor.url })
+                }
+                style={{
+                  cursor: contributor.url ? "pointer" : "default",
+                }}
+                key={contributor.id}
+              >
+                {contributor.name}
+              </div>
+            ))}
+          </td>
+        </tr>
       )}
 
       {item.publishers && (
-        <div>
-          Utgiver:
-          {item.publishers.map((publisher) => (
-            <span
-              onClick={
-                publisher.url && setModal.bind(this, { url: publisher.url })
-              }
-              style={{
-                paddingLeft: "10px",
-                cursor: publisher.url ? "pointer" : "default",
-              }}
-              key={publisher.id}
-            >
-              {publisher.media ? (
-                <img
-                  alt={publisher.name}
-                  src={publisher.media.mediaElement.url}
-                  style={{ maxHeight: "25px", maxWidth: "200px" }}
-                />
-              ) : (
-                <span>{publisher.name}</span>
-              )}
-            </span>
-          ))}
-        </div>
+        <tr>
+          <td>Utgiver:</td>
+          <td>
+            {item.publishers.map((publisher) => (
+              <div
+                onClick={
+                  publisher.url && setModal.bind(this, { url: publisher.url })
+                }
+                style={{
+                  cursor: publisher.url ? "pointer" : "default",
+                }}
+                key={publisher.id}
+              >
+                {publisher.media ? (
+                  <img
+                    alt={publisher.name}
+                    src={publisher.media.mediaElement.url}
+                    style={{ maxHeight: "25px", maxWidth: "200px" }}
+                  />
+                ) : (
+                  <span>{publisher.name}</span>
+                )}
+              </div>
+            ))}
+          </td>
+        </tr>
       )}
 
       {item.infoUrl && (
-        <div
-          onClick={setModal.bind(this, { url: item.infoUrl })}
-          style={{
-            cursor: "pointer",
-            color: "blue",
-            textDecoration: "underline",
-          }}
-        >
-          Mer om bildet
-        </div>
+        <tr>
+          <td></td>
+          <td>
+            <div
+              onClick={setModal.bind(this, { url: item.infoUrl })}
+              style={{
+                cursor: "pointer",
+                color: "blue",
+                textDecoration: "underline",
+              }}
+            >
+              Mer om bildet
+            </div>
+          </td>
+        </tr>
       )}
 
-      <div>{item.license && getLicense(item.license, 60)}</div>
-    </div>
+      {item.license && (
+        <tr>
+          <td></td>
+          <td>{getLicense(item.license, 60)}</td>
+        </tr>
+      )}
+
+      {item.version && (
+        <tr>
+          <td>Versjon:</td>
+          <td>{item.version}</td>
+        </tr>
+      )}
+
+      {item.id && !item.infoUrl && (
+        <tr>
+          <td>Id:</td>
+          <td>{item.id}</td>
+        </tr>
+      )}
+
+      {item.language && (
+        <tr>
+          <td>Språk:</td>
+          <td>{item.language}</td>
+        </tr>
+      )}
+    </table>
   );
 };
 

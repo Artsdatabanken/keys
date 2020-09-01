@@ -19,6 +19,8 @@ import InfoIcon from "@material-ui/icons/Info";
 import RestoreIcon from "@material-ui/icons/Restore";
 
 import Taxon from "./Taxon";
+import TaxonTreeItem from "./TaxonTreeItem";
+
 import Character from "./Character";
 import Modal from "./Modal";
 
@@ -33,7 +35,7 @@ import {
   toggleTaxonDismissed,
   isPartOfKey,
   filterTaxaByNames,
-  getRelevantTaxaCount,
+  filterTaxaByIds,
 } from "../utils/logic";
 import { Button } from "@material-ui/core";
 
@@ -169,7 +171,14 @@ class Identification extends Component {
       .then((response) => response.json())
       .then((data) => {
         let myData = data;
+        myData.keys = this.props.keys;
+
         myData = initElement(myData);
+
+        if (this.props.taxonSelection.length) {
+          myData.taxa = filterTaxaByIds(myData.taxa, this.props.taxonSelection);
+        }
+
         // Set statements with undefined frequencies to frequency=1 (i.e. always true)
         myData.statements = myData.statements.map((statement) => {
           if (statement.frequency === undefined) {
@@ -206,10 +215,13 @@ class Identification extends Component {
           });
         });
         myData.statements = myData.statements.concat(addStatements);
+
         myData = inferAlternatives(myData);
-        myData.relevantTaxaCount = getRelevantTaxaCount(myData.taxa);
+
+        // Give an empty answer to trigger logic
+        myData = giveAnswers(myData, []);
         myData.taxaCount = myData.relevantTaxaCount;
-        myData.results = [];
+
         // myData.characters = getCharacterRelevances(myData);
         this.setState(myData);
       });
@@ -351,6 +363,20 @@ class Identification extends Component {
                     media={this.state.mediaElements}
                   />
                 ))}
+
+              {this.state.relevantTaxaCount === 1 && (
+                <div>
+                  <Typography variant="h5" component="h5">
+                    Svar funnet!
+                  </Typography>
+                  <Taxon
+                    taxon={this.state.results[0]}
+                    setModal={this.setModal}
+                    toggleDismissTaxon={this.toggleDismissTaxon}
+                    standalone={true}
+                  />
+                </div>
+              )}
             </TabPanel>
             {/* <TabPanel value={value} index={2}>
             <AutoIdentifier
@@ -378,7 +404,7 @@ class Identification extends Component {
                     {this.state.taxa
                       .filter((taxon) => taxon.isRelevant)
                       .map((taxon) => (
-                        <Taxon
+                        <TaxonTreeItem
                           toggleDismissTaxon={this.toggleDismissTaxon}
                           setModal={this.setModal}
                           taxon={taxon}
@@ -400,7 +426,7 @@ class Identification extends Component {
                     {this.state.taxa
                       .filter((taxon) => taxon.isIrrelevant)
                       .map((taxon) => (
-                        <Taxon
+                        <TaxonTreeItem
                           toggleDismissTaxon={this.toggleDismissTaxon}
                           setModal={this.setModal}
                           media={this.state.mediaElements}
@@ -447,7 +473,7 @@ class Identification extends Component {
                   {this.state.taxa
                     .filter((taxon) => taxon.isRelevant)
                     .map((taxon) => (
-                      <Taxon
+                      <TaxonTreeItem
                         toggleDismissTaxon={this.toggleDismissTaxon}
                         setModal={this.setModal}
                         taxon={taxon}
@@ -469,7 +495,7 @@ class Identification extends Component {
                   {this.state.taxa
                     .filter((taxon) => taxon.isIrrelevant)
                     .map((taxon) => (
-                      <Taxon
+                      <TaxonTreeItem
                         toggleDismissTaxon={this.toggleDismissTaxon}
                         setModal={this.setModal}
                         taxon={taxon}

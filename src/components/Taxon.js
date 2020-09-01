@@ -5,15 +5,11 @@ import CardHeader from "@material-ui/core/CardHeader";
 import IconButton from "@material-ui/core/IconButton";
 import HighlightOffIcon from "@material-ui/icons/HighlightOff";
 import RestoreIcon from "@material-ui/icons/Restore";
-import TreeItem from "@material-ui/lab/TreeItem";
 import Chip from "@material-ui/core/Chip";
 
 import { Avatar } from "@material-ui/core";
 
-import {
-  getRelevantTaxaCount
-} from "../utils/logic";
-
+import { getRelevantTaxaCount } from "../utils/logic";
 
 function Taxon(props) {
   props.taxon.vernacularName =
@@ -21,7 +17,7 @@ function Taxon(props) {
     props.taxon.vernacularName.slice(1);
 
   const { vernacularName, scientificName, id, isResult } = props.taxon;
-  let media = props.taxon.media; 
+  let media = props.taxon.media;
 
   let children = [];
   if (props.taxon.children) {
@@ -51,7 +47,7 @@ function Taxon(props) {
           <RestoreIcon />
         </IconButton>
       );
-    } else if (props.filter !== "irrelevant") {
+    } else if (props.filter !== "irrelevant" && !props.standalone) {
       return (
         <HighlightOffIcon
           onClick={props.toggleDismissTaxon.bind(this, id)}
@@ -68,8 +64,10 @@ function Taxon(props) {
       style={{ fontSize: "1.12em", lineHeight: ".5em" }}
       gutterBottom
     >
-      {vernacularName} {' '}
-      {props.taxon.children && !props.taxon.isResult && "("  + getRelevantTaxaCount(props.taxon) + ")"}
+      {vernacularName}{" "}
+      {props.taxon.children &&
+        !props.taxon.isResult &&
+        "(" + getRelevantTaxaCount(props.taxon) + ")"}
     </Typography>
   );
 
@@ -79,67 +77,48 @@ function Taxon(props) {
     </Typography>
   );
 
-  let cardStyle = {};
+  let cardStyle = {cursor: "pointer"};
   if (props.filter === "irrelevant") {
     cardStyle.backgroundColor = "#eee";
   }
 
   return (
-    <TreeItem
-      nodeId={props.taxon.id + "_" + props.filter}
-      onLabelClick={(e) => {
-        e.preventDefault();
-      }}
-      label={
-        <Card variant="outlined" style={cardStyle}>
-          <div style={{ display: "flex" }}>
-            {media && (
-              <Avatar
-                variant="square"
-                src={media.mediaElement.find((m) => m.height >= 55).url}
-                style={{ width: "55px", height: "55px" }}
-                onClick={props.setModal.bind(this, {taxon: props.taxon})}
-              />
-            )}
-            <CardHeader
-              style={{ paddingBottom: 0, flex: "1" }}
-              disableTypography={true}
-              title={nameCapitalizedHeader}
-              subheader={scientificNameHeader}
-              onClick={props.setModal.bind(this, {taxon: props.taxon})}
-              />
+    <Card variant="outlined" style={cardStyle}>
+      <div style={{ display: "flex" }}>
+        {media && (
+          <Avatar
+            variant="square"
+            src={media.mediaElement.find((m) => m.height >= 55).url}
+            style={{ width: "55px", height: "55px" }}
+            onClick={props.setModal.bind(this, { taxon: props.taxon })}
+          />
+        )}
+        <CardHeader
+          style={{ paddingBottom: 0, flex: "1" }}
+          disableTypography={true}
+          title={nameCapitalizedHeader}
+          subheader={scientificNameHeader}
+          onClick={props.setModal.bind(this, { taxon: props.taxon })}
+        />
 
-            <div style={{ flex: "0" }}>{getButton()}</div>
-          </div>
-          <div style={{ paddingLeft: "50px" }}>
-            {props.taxon.isResult && children.length === 1 && children[0].vernacularName &&(
-              <Chip
-                style={{ marginLeft: 15, marginBottom: 15, marginTop: -5 }}
-                size="small"
-                variant="default"
-                label={
-                  children[0].vernacularName.charAt(0).toUpperCase() +
-                  children[0].vernacularName.slice(1)
-                }
-              />
-            )}
-          </div>
-        </Card>
-      }
-    >
-      {!props.taxon.isResult
-        ? children.map((child) => (
-            <Taxon
-              toggleDismissTaxon={props.toggleDismissTaxon}
-              setModal={props.setModal}
-              taxon={child}
-              media={props.media}
-              key={child.id}
-              filter={props.filter}
+        <div style={{ flex: "0" }}>{getButton()}</div>
+      </div>
+      <div style={{ paddingLeft: "50px" }}>
+        {props.taxon.isResult &&
+          children.length === 1 &&
+          children[0].vernacularName && (
+            <Chip
+              style={{ marginLeft: 15, marginBottom: 15, marginTop: -5 }}
+              size="small"
+              variant="default"
+              label={
+                children[0].vernacularName.charAt(0).toUpperCase() +
+                children[0].vernacularName.slice(1)
+              }
             />
-          ))
-        : ""}
-    </TreeItem>
+          )}
+      </div>
+    </Card>
   );
 }
 
