@@ -128,15 +128,17 @@ function Alternative(props) {
         <div style={{ flex: "0 1 auto", margin: "15px" }}>{getButtons()}</div>
       </div>
 
-      <Hidden smUp>
-        <div
-          style={{
-            padding: "15px",
-          }}
-        >
-          {alternative.title}
-        </div>
-      </Hidden>
+      {alternative.media && (
+        <Hidden smUp>
+          <div
+            style={{
+              padding: "15px",
+            }}
+          >
+            {alternative.title}
+          </div>
+        </Hidden>
+      )}
     </Box>
   );
 }
