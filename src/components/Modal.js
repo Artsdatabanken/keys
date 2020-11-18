@@ -14,6 +14,8 @@ import Divider from "@material-ui/core/Divider";
 
 import ItemMetadata from "../components/ItemMetadata";
 import KeyInfo from "./KeyInfo";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { useTheme } from "@material-ui/core/styles";
 
 function Modal(props) {
   let { modalObject, setModal } = props;
@@ -142,13 +144,17 @@ function Modal(props) {
           <ReactMarkdown source={key.descriptionDetails} />
         </Typography>
 
-        {!!taxonSelection.length && 
-        <Typography variant="body1" component="p">
-        <b>Du ser på en delnøkkel, som er begrenset til {taxonSelection.length === 1 ? "ett takson" : taxonSelection.length + " taksa"}.</b>
-      </Typography>
-        }
-
-
+        {!!taxonSelection.length && (
+          <Typography variant="body1" component="p">
+            <b>
+              Du ser på en delnøkkel, som er begrenset til{" "}
+              {taxonSelection.length === 1
+                ? "ett takson"
+                : taxonSelection.length + " taksa"}
+              .
+            </b>
+          </Typography>
+        )}
 
         {key.descriptionUrl && (
           <div style={{ paddingTop: "1em" }}>
@@ -166,7 +172,7 @@ function Modal(props) {
         {!!taxonSelection.length && (
           <div>
             <Divider style={{ margin: "2em 0 1em 0" }} />
-            <Typography variant="overline" style={{lineHeight: "1em"}}>
+            <Typography variant="overline" style={{ lineHeight: "1em" }}>
               Denne nøkkelen kan bestemme mer enn utvalget du bruker det til nå.
               Bruk hele nøkkelen hvis du er usikker om det gjeldende utvalget er
               korrekt:
@@ -178,7 +184,7 @@ function Modal(props) {
         {!!parentKeys.length && (
           <div>
             <Divider style={{ margin: "2em 0 1em 0" }} />
-            <Typography variant="overline" style={{lineHeight: "1em"}}>
+            <Typography variant="overline" style={{ lineHeight: "1em" }}>
               Ikke sikker om dette er nøkkelen du trenger? Følgende{" "}
               {parentKeys.length === 1 ? "nøkkel" : "nøkler"} kan brukes til å
               sjekke om{" "}
@@ -192,7 +198,7 @@ function Modal(props) {
           </div>
         )}
         <Divider style={{ margin: "2em 0 1em 0" }} />
-        <Typography variant="overline" style={{lineHeight: "1em"}}>
+        <Typography variant="overline" style={{ lineHeight: "1em" }}>
           Artsdatabanken har også {modalObject.keys.length - 1} andre nøkler.{" "}
           <a href="./">Gå til oversikten</a>.
         </Typography>
@@ -222,7 +228,7 @@ function Modal(props) {
                 }
                 style={{
                   maxHeight: "50vh",
-                  maxWidth: "90vw",
+                  maxWidth: "100%",
                   display: "block",
                   marginLeft: "auto",
                   marginRight: "auto",
@@ -413,12 +419,15 @@ function Modal(props) {
     );
   }
 
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <Dialog
       aria-labelledby="dialog-title"
       open={!!modalContent}
       onClose={setModal.bind(this, {})}
-      fullWidth={true}
+      fullScreen={fullScreen}
       maxWidth="lg"
     >
       <DialogTitle id="simple-dialog-title">

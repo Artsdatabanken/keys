@@ -275,6 +275,11 @@ class Identification extends Component {
 
     return (
       <div style={{ display: "flex" }}>
+
+        
+
+
+
         <Modal modalObject={this.state.modalObject} setModal={this.setModal} />
 
         <AppBar
