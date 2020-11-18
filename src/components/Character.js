@@ -57,7 +57,7 @@ function Character(props) {
       <CardContent>
         {props.character.alternatives.map((alternative) => (
           <React.Fragment key={alternative.id}>
-            <Divider />
+            <Divider style={{ margin: "10px 0 10px 0"}} />
             <Alternative
               alternative={alternative}
               siblings={props.character.alternatives.filter(a => a.answerIs === undefined).length - 1}

@@ -449,10 +449,94 @@ const processFile = async (err, data) => {
     keysData.push(keyEntry);
   }
 
+  let groups = [
+    {
+      ScientificName: "Arthropoda",
+      ScientificNameId: 39,
+      "VernacularName_nb-NO": "leddyr",
+      "VernacularName_nn-NO": "leddyr",
+    },
+    {
+      ScientificName: "Chordata",
+      ScientificNameId: 196,
+      "VernacularName_nb-NO": "ryggstrengdyr",
+      "VernacularName_nn-NO": "ryggstrengdyr",
+    },
+    {
+      ScientificName: "Bryophyta",
+      ScientificNameId: 1158,
+      "VernacularName_nb-NO": "bladmoser",
+      "VernacularName_nn-NO": "bladmosar",
+    },
+  ];
+
+  const insertKey = (key, array) => {
+    key = { id: key.id, classification: key.classification };
+
+    if (!array.length) {
+      return [key];
+    }
+
+    let inserted = false;
+
+    for (let index = 0; index < array.length; index++) {
+      const element = array[index];
+      if (
+        key.classification
+          .slice(0, key.classification.length - 1)
+          .find(
+            (id) =>
+              id.ScientificNameId ===
+              element.classification[element.classification.length - 1]
+                .ScientificNameId
+          )
+      ) {
+        array[index].keys = insertKey(key, element.keys || []);
+        inserted = true;
+        break;
+      }
+    }
+
+    if (!inserted) {
+      array.push(key);
+      return array;
+    }
+
+    return array;
+  };
+
+  const cleanKey = (key) => {
+    if (key.keys) {
+      key.keys = key.keys.map((k) => cleanKey(k));
+    }
+
+    return { id: key.id, keys: key.keys };
+  };
+
+  groups = groups
+    .map((group) => {
+      keysData
+        .sort((a, b) => a.classification.length - b.classification.length)
+        .forEach((key) => {
+          if (
+            +key.classification[1].ScientificNameId === +group.ScientificNameId
+          ) {
+            group.keys = insertKey(key, group.keys || []);
+          }
+        });
+
+      return group;
+    })
+    .map((group) => {
+      group.keys = group.keys.map((k) => cleanKey(k));
+      return group;
+    });
+
   fs.writeFile(
     "keys.json",
     JSON.stringify({
       keys: keysData,
+      tree: groups,
     }),
     "utf-8",
     (err) => {

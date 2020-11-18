@@ -10,6 +10,7 @@ class App extends Component {
     super();
     this.state = {
       keys: [],
+      tree: []
     };
   }
 
@@ -17,7 +18,7 @@ class App extends Component {
     fetch("https://keys.test.artsdatabanken.no/keys.json")
       .then((response) => response.json())
       .then((data) => {
-        this.setState({ keys: data.keys });
+        this.setState({ keys: data.keys, tree: data.tree });
       });
   }
 
@@ -31,7 +32,7 @@ class App extends Component {
     if (keyId && this.state.keys.find((k) => k.id === keyId)) {
       return <Identification keyId={keyId} keys={this.state.keys} taxonSelection={taxonSelection} />;
     }
-    return <KeyList keys={this.state.keys} />;
+    return <KeyList keys={this.state.keys} tree={this.state.tree}/>;
   }
 }
 

@@ -4,24 +4,29 @@ import ClearIcon from "@material-ui/icons/Clear";
 import CheckIcon from "@material-ui/icons/Check";
 import RestoreIcon from "@material-ui/icons/Restore";
 import Box from "@material-ui/core/Box";
+import Hidden from "@material-ui/core/Hidden";
 
 import { Avatar } from "@material-ui/core";
 
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 
-function AlternativeContent(props) {
-  const { title, media } = props.alternative;
-
-  let avatar = "";
-  if (media) {
-    avatar = (
+function getMedia(props) {
+  if (props.alternative.media) {
+    return (
       <Avatar
         variant="square"
-        src={media.mediaElement.find((m) => m.height >= 85).url}
-        style={{ flex: "0 0 85px", height: "85px", marginRight: "15px" }}
+        src={
+          props.alternative.media.mediaElement.find((m) => m.height >= 128).url
+        }
+        style={{ flex: "0 0 128px", height: "128px" }}
       />
     );
   }
+  return null;
+}
+
+function AlternativeContent(props) {
+  const { title, media } = props.alternative;
 
   return (
     <div
@@ -29,7 +34,7 @@ function AlternativeContent(props) {
         display: "flex",
         flex: "1 1 auto",
         cursor:
-          props.alternative.media ||
+          media ||
           props.alternative.description ||
           props.alternative.descriptionUrl ||
           props.alternative.descriptionDetails
@@ -37,23 +42,22 @@ function AlternativeContent(props) {
             : "default",
       }}
       onClick={
-        (props.alternative.media ||
+        (media ||
           props.alternative.description ||
           props.alternative.descriptionUrl ||
           props.alternative.descriptionDetails) &&
-        props.setModal.bind(this, {alternative: props.alternative})
+        props.setModal.bind(this, { alternative: props.alternative })
       }
     >
-      {avatar}
+      {getMedia(props)}
       <div
         style={{
-          paddingTop: "15px",
-          paddingBottom: "15px",
+          padding: "15px",
           flex: "1 1 auto",
           flexWrap: "wrap",
         }}
       >
-        {title}
+        {media ? <Hidden xsDown>{title}</Hidden> : <div>{title} </div>}
       </div>
     </div>
   );
@@ -68,8 +72,8 @@ function Alternative(props) {
       return (
         <ButtonGroup size="large" orientation="vertical">
           <Button
-              className="button--green"
-              onClick={props.giveAnswer.bind(this, id, true)}
+            className="button--green"
+            onClick={props.giveAnswer.bind(this, id, true)}
           >
             <CheckIcon />
           </Button>
@@ -89,11 +93,7 @@ function Alternative(props) {
       return (
         <ButtonGroup size="large" orientation="vertical">
           <Button
-            className={
-              answerIs
-                ? "button--green"
-                : "button--red"
-            }
+            className={answerIs ? "button--green" : "button--red"}
             variant="contained"
             onClick={props.undoAnswer.bind(this, id)}
           >
@@ -105,7 +105,7 @@ function Alternative(props) {
   };
 
   const getBoxStyle = () => {
-    let style = { display: "flex", flex: "1 1 auto" };
+    let style = {};
     if (answerIs) {
       style.backgroundColor = "#E8F5E9";
     } else if (answerIs === false) {
@@ -116,15 +116,27 @@ function Alternative(props) {
 
   return (
     <Box style={getBoxStyle()}>
-      <div style={{ flex: "1 1 auto" }}>
-        <AlternativeContent
-          alternative={alternative}
-          media={props.media}
-          setModal={props.setModal}
-          key={alternative.id}
-        />
+      <div style={{ display: "flex", flex: "1 1 auto" }}>
+        <div style={{ flex: "1 1 auto" }}>
+          <AlternativeContent
+            alternative={alternative}
+            media={props.media}
+            setModal={props.setModal}
+            key={alternative.id}
+          />
+        </div>
+        <div style={{ flex: "0 1 auto", margin: "15px" }}>{getButtons()}</div>
       </div>
-      <div style={{ flex: "0 1 auto", margin: "15px" }}>{getButtons()}</div>
+
+      <Hidden smUp>
+        <div
+          style={{
+            padding: "15px",
+          }}
+        >
+          {alternative.title}
+        </div>
+      </Hidden>
     </Box>
   );
 }

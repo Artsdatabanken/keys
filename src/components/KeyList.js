@@ -1,12 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Typography from "@material-ui/core/Typography";
+
+import TreeView from "@material-ui/lab/TreeView";
+import TreeItem from "@material-ui/lab/TreeItem";
+import AddCircleIcon from "@material-ui/icons/AddCircle";
+import RemoveCircleIcon from "@material-ui/icons/RemoveCircle";
 
 import SearchBox from "./SearchBox";
 import KeyInfo from "./KeyInfo";
+import KeyListTreeItem from "./KeyListTreeItem";
 
 function KeyList(props) {
   const [filterTaxon, setfilterTaxon] = useState(false);
   const [keys, setKeys] = useState(false);
+  const [expanded, setExpanded] = useState([]);
 
   const applyFilter = (taxon) => {
     setfilterTaxon(taxon);
@@ -37,6 +44,18 @@ function KeyList(props) {
     }
   };
 
+  const handleToggle = (event, nodeIds) => {
+    setExpanded(nodeIds);
+  };
+
+  useEffect(() => {
+    setExpanded(
+      props.keys
+        .map((k) => k.id)
+        .concat(props.tree.map((phylum) => "phylum" + phylum.ScientificNameId))
+    );
+  }, [props.keys, props.tree]);
+
   return (
     <main style={{ width: "100%" }}>
       <div style={{ padding: 25 }}>
@@ -64,10 +83,36 @@ function KeyList(props) {
             </Typography>
           )}
 
-        {!keys &&
-          props.keys.map((key) => (
-            <KeyInfo key={key.id} keyItem={key} filterTaxon={filterTaxon} />
-          ))}
+        {!keys && (
+          <TreeView
+            defaultCollapseIcon={<RemoveCircleIcon />}
+            defaultExpandIcon={<AddCircleIcon />}
+            expanded={expanded}
+            onNodeToggle={handleToggle}
+            disableSelection={true}
+          >
+            {props.tree.map((phylum) => (
+              <TreeItem
+                nodeId={"phylum" + phylum.ScientificNameId}
+                key={phylum.ScientificNameId}
+                label={
+                  <Typography variant="h5" component="h5">
+                    {phylum["VernacularName_nb-NO"][0].toUpperCase()}
+                    {phylum["VernacularName_nb-NO"].slice(1).toLowerCase()}
+                  </Typography>
+                }
+              >
+                {phylum.keys.map((key) => (
+                  <KeyListTreeItem
+                    key={key.id}
+                    treeItem={key}
+                    keys={props.keys}
+                  />
+                ))}
+              </TreeItem>
+            ))}
+          </TreeView>
+        )}
 
         {keys &&
           keys.exact.map((key) => (
