@@ -214,7 +214,7 @@ function Modal(props) {
       setModal({ url: content.descriptionUrl });
     } else {
       modalContent = (
-        <div style={{ margin: "25px" }}>
+        <div style={{ margin: "0px" }}>
           {content.media && (
             <div>
               <img
